@@ -1,2 +1,2 @@
 # Overview
-Small cmd tool for fetching urls and determining whether the connection is secure or not. 
+fetches urls and determines whether or not the connection is secure via https/tls or ssl 
