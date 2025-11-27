@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+var (
+	MAX_IDLE = 10
+)
+
 func hasHTTP(url string) string {
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		url = "https://" + url
@@ -26,21 +30,26 @@ func printTLSInfo(resp *http.Response) {
     ver := resp.TLS.Version
     cert := resp.TLS.PeerCertificates[0]
 
-    fmt.Println("=== TLS Information ===")
+	fmt.Printf("\n")
+	fmt.Println("--- TLS ANALYSIS ---")
     fmt.Printf("Version: %x\n", ver)
     fmt.Printf("Cipher Suite: %x\n", cs)
+	// Issued to..
     fmt.Printf("Server Name: %s\n", resp.TLS.ServerName)
+	// Issued by..
     fmt.Printf("Certificate Issuer: %s\n", cert.Issuer.CommonName)
-    fmt.Printf("Certificate Subject: %s\n", cert.Subject.CommonName)
-    fmt.Printf("Valid From: %s\n", cert.NotBefore)
-    fmt.Printf("Valid Until: %s\n", cert.NotAfter)
+	fmt.Printf("Organization: %s\n", cert.Issuer.Organization)
+    fmt.Printf("Certificate Holder: %s\n", cert.Subject.CommonName)
+	// Validity period
+    fmt.Printf("Issued on: %s\n", cert.NotBefore)
+    fmt.Printf("Expires on: %s\n", cert.NotAfter)
 }
 
 func Fetch(){
 	/*TRANSPORT */
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
-		MaxIdleConns:        20,
+		MaxIdleConnsPerHost: 2,		
 		IdleConnTimeout:     30 * time.Second,
 		TLSHandshakeTimeout: 10 * time.Second,
 		DisableCompression:  true,
@@ -75,5 +84,7 @@ func Fetch(){
 		fmt.Printf("%d\n", b)
 
 		fmt.Printf("Response code: %s\n", response.Status)
+		// CLOSE ANY idle connections, tr makes a max of 2 connections. 
+		tr.CloseIdleConnections()
 	}
 }
