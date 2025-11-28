@@ -50,12 +50,14 @@ func Fetch(){
 		}
 
 		response.Body.Close()
-		pkg.DisplayTLS(response)
-		
+		tls := pkg.GetTLS(response)
+
+		s, _ := tls.JSON()
+		fmt.Println(s) 
+
 		fmt.Printf("Response code: %s\nResponse time: %dns %fs\n", response.Status, time.Since(start).Nanoseconds(), time.Since(start).Seconds())
 
 		// CLOSE ANY idle connections, tr makes a max of 2 connections. 
 		tr.CloseIdleConnections()
 	}
-	
 }
