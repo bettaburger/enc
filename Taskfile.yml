@@ -1,0 +1,13 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - go run ./cmd/main.go
+    silent: true
+
+  build:
+    cmds:
+      - go build ./cmd/main.go
