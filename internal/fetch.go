@@ -1,14 +1,14 @@
 package internal
 
 import (
+	"bufio"
 	"fmt"
 	//"io"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"enc/pkg"
+	"enc/config"
 )
 
 var (
@@ -23,6 +23,8 @@ func HasHTTP(url string) string {
 }
 
 func Fetch(){
+
+	scanner := bufio.NewScanner(os.Stdin)
 	/*TRANSPORT */
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
@@ -37,8 +39,18 @@ func Fetch(){
     	Timeout:   15 * time.Second,
 	}
 
-	for _, url := range os.Args[1:] {
-		
+	for {
+		fmt.Print("enc% ")
+
+		if !scanner.Scan() {
+			break
+		}
+
+		url := strings.TrimSpace(scanner.Text())
+		if url == "exit"{
+			break
+		}
+
 		url = HasHTTP(url)
 
 		start := time.Now()
@@ -50,7 +62,7 @@ func Fetch(){
 		}
 
 		response.Body.Close()
-		tls := pkg.GetTLS(response)
+		tls := config.GetTLS(response)
 
 		s, _ := tls.JSON()
 		fmt.Println(s) 
@@ -59,5 +71,7 @@ func Fetch(){
 
 		// CLOSE ANY idle connections, tr makes a max of 2 connections. 
 		tr.CloseIdleConnections()
+
+		
 	}
 }
