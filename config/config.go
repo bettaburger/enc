@@ -1,4 +1,4 @@
-package pkg
+package config
 
 import (
 	"crypto/x509"
@@ -38,9 +38,8 @@ func GetTLS(response *http.Response) *TLS {
         fmt.Println("No TLS (connection was HTTP)")
     }
 
-
     cert = response.TLS.PeerCertificates[0]
-    
+
     duration = time.Until(cert.NotAfter)
 	if duration == 0 {
 		expiresIn = "expired"
