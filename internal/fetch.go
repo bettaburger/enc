@@ -1,14 +1,16 @@
 package internal
 
 import (
+	"bufio"
+	"enc"
 	"fmt"
+
 	//"io"
+	"enc/config"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"enc/pkg"
 )
 
 var (
@@ -22,12 +24,24 @@ func HasHTTP(url string) string {
 	return url
 }
 
+func DisplayHelp(str string) {
+	if enc.StrCmp(str, "--help") == 0 {
+		fmt.Printf("\n")
+		fmt.Printf("--help		show this message, then exit\n")
+		fmt.Printf("\n")
+		fmt.Printf("--exit		terminate process\n")
+	}	
+}
+
 func Fetch(){
+	//var filename string
+	
+	scanner := bufio.NewScanner(os.Stdin)
 	/*TRANSPORT */
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		MaxIdleConnsPerHost: MAX_IDLE,		
-		IdleConnTimeout:     30 * time.Second,
+		IdleConnTimeout:     0, // no limit, if the connection to the url is longer than the timeout?
 		TLSHandshakeTimeout: 10 * time.Second,
 		DisableCompression:  true,
 	}
@@ -37,26 +51,42 @@ func Fetch(){
     	Timeout:   15 * time.Second,
 	}
 
-	for _, url := range os.Args[1:] {
-		
-		url = HasHTTP(url)
+	fmt.Printf("\n")
 
-		start := time.Now()
-
-		response, err := client.Get(url)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "fetch: %v\n", err) 
+	for {
+		fmt.Print("$ https://")
+		if !scanner.Scan() {
+			break
+		}
+		url := strings.TrimSpace(scanner.Text())
+		if enc.StrCmp(url, "--exit") == 0 {
 			os.Exit(1)
 		}
-
+		DisplayHelp(url)
+		url = HasHTTP(url)
+		start := time.Now()
+		response, err := client.Get(url)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "fetch: %v. Try --help\n", err)
+			continue
+		}
+		fmt.Printf("\n")
 		response.Body.Close()
-		tls := pkg.GetTLS(response)
+		r := config.BuildResponse(response)
+		r.JSON()
 
-		s, _ := tls.JSON()
-		fmt.Println(s) 
-
-		fmt.Printf("Response code: %s\nResponse time: %dns %fs\n", response.Status, time.Since(start).Nanoseconds(), time.Since(start).Seconds())
-
+		host, err := os.Hostname()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "hostname: %v\n", err)
+		}
+		/*
+		file, err := os.Open(filename)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error retrieving %s\n", filename)
+		}*/
+		fmt.Printf("\n")
+		fmt.Printf("%s %s\nResponse time: %dns %fs\nLocal: %s\n", response.Proto, response.Status, time.Since(start).Nanoseconds(), time.Since(start).Seconds(), host)
+		fmt.Printf("\n")
 		// CLOSE ANY idle connections, tr makes a max of 2 connections. 
 		tr.CloseIdleConnections()
 	}
