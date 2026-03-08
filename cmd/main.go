@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"os"
 	
-
 	tea "charm.land/bubbletea/v2"
 )
 
 type model struct {
 	options 		[]	string		// main menu options
 	cursor 				int 		// what our cursor is pointing to
-	selected 	map[int]struct{}	// what option is being selected
+	selected 			int			// what option is being selected
 }
 
 func initalModel() model {
 	return model {
 		options: 	[]string{"url", "help", "exit"},
-		selected: 	make(map[int]struct{}),
+		selected: 	-1	, // nothing selected
+		cursor: 	0, 
 	}
 }
 
@@ -29,11 +29,8 @@ func (m model) Init() tea.Cmd {
 // KEYBOARD CONTROL
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
-
     case tea.KeyPressMsg:
-
         switch msg.String() {
-
         // keys to exit the process
         case "ctrl+c", "q":
             return m, tea.Quit
@@ -43,51 +40,39 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
             if m.cursor > 0 {
                 m.cursor--
             }
-
         // move the cursor down
         case "down":
             if m.cursor < len(m.options)-1 {
                 m.cursor++
             }
-
         // selected state
         case "enter", "space":
-            _, ok := m.selected[m.cursor]
-            if ok {
-                delete(m.selected, m.cursor)
+            if m.selected == m.cursor {
+				m.selected = -1
+                
             } else {
-                m.selected[m.cursor] = struct{}{}
+                m.selected = m.cursor
             }
         }
     }
-
     return m, nil
 }
 
 // RENDERS UI 
 func (m model) View() tea.View {
-    // The header
     s := "Tool for http look up:\n\n"
-
-    // Iterate over our choices
     for i, option := range m.options {
-
-        // Is the cursor pointing at this choice?
-        cursor := " " // no cursor
+        cursor := " " 
         if m.cursor == i {
-            cursor = ">" // cursor!
+            cursor = ">" // cursor
         }
-
-        // Is this choice selected?
-        checked := " " // not selected
-        if _, ok := m.selected[i]; ok {
-            checked = "x" // selected!
+        checked := " " 
+        if m.selected == i {
+            checked = "x" // selected
         }
-
         // Render the row
         s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, option)
     }
-	
     s += "\nPress q to quit.\n"
     return tea.NewView(s)
 }
