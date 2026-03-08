@@ -79,14 +79,6 @@ func (d Date) MarshalJSON() ([]byte, error) {
     return []byte(`"` + str + `"`), nil
 }
 
-
-
-
-
-
-
-
-
 func (r *Response) JSON() {
 	b, err := json.MarshalIndent(&r, "", "  ")
 	if err != nil {
